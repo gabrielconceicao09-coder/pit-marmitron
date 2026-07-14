@@ -41,5 +41,8 @@ As instrucoes para demonstracao MQTT, Wokwi e ROS/Nav2 estao em:
 Computacional/app/docs/DEMONSTRATION_QUICKSTART.md
 ```
 
+O roteiro tecnico completo da apresentacao esta em
+`release/PRESENTATION_SCRIPT.md`.
+
 Nao envie `lock_secrets.h`, `.env`, chaves privadas ou senhas para o
 repositorio ou para a GitHub Release.
