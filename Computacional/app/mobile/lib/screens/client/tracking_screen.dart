@@ -1,18 +1,7 @@
 // lib/screens/client/tracking_screen.dart
 //
-// CHANGES IN THIS REVISION
-// ────────────────────────
-// BUG FIX — Order history cancellation reason:
-//   The cancel dialog previously called removeOrder(order.orderId) with no
-//   `reason` argument, which defaulted to 'completed'. This caused cancelled
-//   orders to appear with an "Entregue" badge in the history sheet instead of
-//   "Cancelado". Fixed by passing reason: 'cancelled' explicitly.
-//
-//   Root cause: removeOrder()'s default parameter is 'completed' — correct for
-//   the happy path in code_screen.dart, but the cancel dialog is a different
-//   call site that must be explicit.
-//
-// All other logic and layout is unchanged from the previous revision.
+// Order tracking + cancel. The cancel dialog calls removeOrder(id,
+// reason: 'cancelled') explicitly (default is 'completed').
 // ignore_for_file: prefer_const_constructors
 
 import 'dart:async';

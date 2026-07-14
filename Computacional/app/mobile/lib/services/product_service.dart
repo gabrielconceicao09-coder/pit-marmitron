@@ -9,25 +9,6 @@ import 'api_service.dart';
 class ProductService {
   const ProductService();
 
-  /// Get product by ID
-  Future<Product> getProductById(String productId) async {
-    final uri = Uri.parse('${ApiService.baseUrl}/api/products/$productId');
-
-    final response = await http.get(uri).timeout(ApiService.apiTimeout);
-
-    if (response.statusCode == 404) {
-      throw Exception('Product not found');
-    }
-
-    if (response.statusCode != 200) {
-      final error = _extractError(response.body);
-      throw Exception('Failed to get product: $error');
-    }
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    return Product.fromJson(data);
-  }
-
   /// List products by restaurant
   Future<List<Product>> listProductsByRestaurant(
     String restaurantId, {
@@ -130,22 +111,6 @@ class ProductService {
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     return Product.fromJson(data);
-  }
-
-  /// Delete a product
-  Future<void> deleteProduct(String productId) async {
-    final uri = Uri.parse('${ApiService.baseUrl}/api/products/$productId');
-
-    final response = await http.delete(uri).timeout(ApiService.apiTimeout);
-
-    if (response.statusCode == 404) {
-      throw Exception('Product not found');
-    }
-
-    if (response.statusCode != 204 && response.statusCode != 200) {
-      final error = _extractError(response.body);
-      throw Exception('Failed to delete product: $error');
-    }
   }
 
   // ─── Helper methods ──────────────────────────────────────────────────────────

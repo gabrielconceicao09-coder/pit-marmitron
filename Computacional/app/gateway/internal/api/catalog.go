@@ -43,7 +43,7 @@ func (s *Server) getRestaurantHandler(catalogSvc *catalog.Service) http.HandlerF
 
 		item, err := catalogSvc.GetRestaurantDetails(r.Context(), restaurantID)
 		if err != nil {
-			if strings.Contains(err.Error(), catalog.ErrRestaurantNotFound.Error()) || errors.Is(err, catalog.ErrRestaurantNotFound) {
+			if errors.Is(err, catalog.ErrRestaurantNotFound) {
 				writeJSON(w, http.StatusNotFound, errorResponse{Error: "restaurant not found"})
 				return
 			}
@@ -67,7 +67,7 @@ func (s *Server) listRestaurantProductsHandler(catalogSvc *catalog.Service) http
 
 		items, err := catalogSvc.ListProductsByRestaurant(r.Context(), restaurantID)
 		if err != nil {
-			if strings.Contains(err.Error(), catalog.ErrRestaurantNotFound.Error()) || errors.Is(err, catalog.ErrRestaurantNotFound) {
+			if errors.Is(err, catalog.ErrRestaurantNotFound) {
 				writeJSON(w, http.StatusNotFound, errorResponse{Error: "restaurant not found"})
 				return
 			}

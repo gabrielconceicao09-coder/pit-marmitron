@@ -1,32 +1,8 @@
 // lib/screens/client/profile_screen.dart
 //
-// REFACTOR: Global User Identity + Order History (2025)
-// ──────────────────────────────────────────────────────
-//
-// CHANGES FROM ORIGINAL
-// ─────────────────────
-// 1. _FormRow converted from StatelessWidget to StatefulWidget.
-//    The original used TextEditingController(text: value) inside build(),
-//    which creates a brand-new controller on every rebuild — a memory leak
-//    and a UX bug (cursor resets to position 0 on any setState). Controllers
-//    are now created once in initState() and disposed in dispose().
-//
-// 2. Controllers are driven by userStateNotifier.value in initState() so
-//    the fields are always pre-populated with the current user data, even
-//    after a previous save mutated the notifier.
-//
-// 3. The "Salvar" AppBar button now calls updateUser() (from user_state.dart)
-//    with a copyWith snapshot of all four controller values. ValueNotifier
-//    fires only if the data actually changed (equality guard in updateUser).
-//
-// 4. Avatar initials are reactive: they read user.initials from the notifier
-//    instead of the hardcoded 'MS' string.
-//
-// 5. "Histórico de pedidos" row now opens a bottom sheet that reads
-//    pastOrdersNotifier. The sheet is self-contained and handles the
-//    empty-state gracefully.
-//
-// 6. All AC.*(context) dynamic theme accessors are preserved throughout.
+// User profile: fields backed by userStateNotifier, "Salvar" calls updateUser(),
+// "Histórico de pedidos" reads pastOrdersNotifier. _FormRow owns its controllers
+// (created in initState, disposed in dispose) to avoid rebuild leaks.
 
 // ignore_for_file: prefer_const_constructors
 import 'package:flutter/material.dart';
@@ -503,8 +479,7 @@ class _PastOrderTile extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: Color(
-                  int.parse('FF${order.restaurantBgColor}', radix: 16)),
+              color: hexBg(order.restaurantBgColor),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Center(

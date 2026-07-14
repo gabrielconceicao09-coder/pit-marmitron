@@ -1,29 +1,9 @@
 // lib/operator/screens/operator_screen.dart
 //
-// OPERATOR DASHBOARD
-// ──────────────────────────────────────────────────────────────────────────────
-// Exclusive to users with role 'operator'. Provides:
-//
-//   1. Real-time telemetry (polled every 3 s via GET /api/robot/telemetry)
-//      • State badge (IDLE / NAVEGANDO / CHEGOU / OFFLINE_HOLD / FALHA)
-//      • Battery percentage with colour-coded progress bar
-//      • Speed (km/h), ETA (min), distance remaining (m), progress %
-//      • CPU % and memory % for system health
-//      • Pose (x, y, θ)
-//      • Active order ID (if any)
-//
-//   2. Emergency Stop (POST /api/robot/estop)
-//      • Large red button with double-confirmation dialog
-//      • Clear warning when MQTT is unreachable (robot may not stop)
-//      • Haptic heavy-impact on confirmation
-//
-//   3. Manual refresh button + auto-refresh indicator
-//
-// ARCHITECTURE
-// ─────────────
-// State is managed with a single _OperatorState object updated via setState().
-// No provider / riverpod needed — the screen is ephemeral, never shared.
-// Polling uses Timer.periodic; cancelled in dispose().
+// Operator dashboard (role 'operator'): real-time telemetry polled every 3s via
+// GET /api/robot/telemetry, and Emergency Stop (POST /api/robot/estop) with a
+// double-confirmation dialog. State via setState(); polling Timer cancelled in
+// dispose().
 //
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 

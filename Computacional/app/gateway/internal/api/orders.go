@@ -53,12 +53,8 @@ func (s *Server) createOrderHandler(orderSvc *orders.Service) http.HandlerFunc {
 
 		order, err := orderSvc.CreateOrder(r.Context(), req)
 		if err != nil {
-			if strings.Contains(err.Error(), "validation failed") {
-				writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
-				return
-			}
-			if strings.Contains(err.Error(), "total validation failed") {
-				writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
+			if errors.Is(err, orders.ErrValidation) {
+				writeJSON(w, http.StatusBadRequest, errorResponse{Error: validationMessage(err, orders.ErrValidation)})
 				return
 			}
 
@@ -211,8 +207,8 @@ func (s *Server) updateOrderStatusHandler(orderSvc *orders.Service) http.Handler
 				writeJSON(w, http.StatusBadRequest, errorResponse{Error: "invalid status"})
 				return
 			}
-			if strings.Contains(err.Error(), "invalid status transition") {
-				writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
+			if errors.Is(err, orders.ErrInvalidTransition) {
+				writeJSON(w, http.StatusBadRequest, errorResponse{Error: validationMessage(err, orders.ErrInvalidTransition)})
 				return
 			}
 			if errors.Is(err, orders.ErrCancelCommandPublish) {
@@ -231,4 +227,13 @@ func (s *Server) updateOrderStatusHandler(orderSvc *orders.Service) http.Handler
 			Status:  req.Status,
 		})
 	}
+}
+
+func validationMessage(err error, sentinel error) string {
+	msg := err.Error()
+	prefix := sentinel.Error() + ": "
+	if detail, ok := strings.CutPrefix(msg, prefix); ok {
+		return detail
+	}
+	return sentinel.Error()
 }

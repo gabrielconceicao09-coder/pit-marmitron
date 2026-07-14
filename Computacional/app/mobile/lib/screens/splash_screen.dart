@@ -1,19 +1,6 @@
 // lib/screens/splash_screen.dart
 //
-// MARMITRON 3000 — Splash Screen
-// ─────────────────────────────────────────────────────────────────────────────
-// CHANGE: _navigate() now routes to LoginScreen instead of ClientHomeScreen.
-//         SplashScreen is a pure brand moment + gatekeeper; auth state lives
-//         in LoginScreen. When a real token is persisted, add the check here:
-//
-//           final token = await SecureStorage.read('auth_token');
-//           if (token != null && !isExpired(token)) {
-//             go → ClientHomeScreen  (auto-login)
-//           } else {
-//             go → LoginScreen
-//           }
-//
-// All animation code is unchanged from the original.
+// Splash / brand moment. _navigate() routes to LoginScreen (auth lives there).
 // ignore_for_file: prefer_const_constructors
 
 import 'dart:async';

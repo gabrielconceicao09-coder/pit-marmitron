@@ -1,19 +1,8 @@
 // lib/screens/client/code_screen.dart
 //
-// CHANGES IN THIS REVISION (Phase 1.5 — On-Demand Display)
-// ──────────────────────────────────────────────────────────
-// FIX — Race condition: _escanearERetirar() now performs a sequential async
-//   chain:
-//     1. Call wakeDisplay(orderId)    → ESP32 renders the QR on its OLED.
-//     2. Await success response       → only then push QrScannerScreen.
-//     3. If wakeDisplay fails         → offer manual entry, never block user.
-//
-// The button is disabled (loading=true) from the moment the user taps until
-// either the scanner is pushed or an error is shown. This prevents double-taps
-// from issuing concurrent wake-display requests.
-//
-// All other logic (FIX #1 removeOrder, FIX #2 _isValidating, FIX #5 rating
-// sheet) is preserved unchanged.
+// OTP / QR retrieval screen. _escanearERetirar() calls wakeDisplay(orderId),
+// then pushes QrScannerScreen on success or offers manual entry on failure.
+// The button is disabled while in flight to prevent double-taps.
 
 import 'dart:async';
 import 'package:flutter/material.dart';

@@ -52,12 +52,7 @@ func NewService(
 func (s *Service) CreateOrder(ctx context.Context, req CreateOrderRequest) (*OrderWithItems, error) {
 	// Validate request
 	if err := s.validateCreateOrderRequest(req); err != nil {
-		return nil, fmt.Errorf("validation failed: %w", err)
-	}
-
-	// Validate order total matches line items
-	if err := s.validateOrderTotal(req); err != nil {
-		return nil, fmt.Errorf("total validation failed: %w", err)
+		return nil, fmt.Errorf("%w: %v", ErrValidation, err)
 	}
 
 	// Create order
@@ -87,7 +82,7 @@ func (s *Service) CreateOrder(ctx context.Context, req CreateOrderRequest) (*Ord
 func (s *Service) GetOrderByID(ctx context.Context, orderID string) (*OrderWithItems, error) {
 	order, err := s.repo.GetOrderByID(ctx, orderID)
 	if err != nil {
-		if err == ErrOrderNotFound {
+		if errors.Is(err, ErrOrderNotFound) {
 			return nil, err
 		}
 		s.log.Error("failed to get order", "order_id", orderID, "error", err)
@@ -97,15 +92,19 @@ func (s *Service) GetOrderByID(ctx context.Context, orderID string) (*OrderWithI
 	return order, nil
 }
 
-// ListOrdersByClient retrieves orders for a specific client
-func (s *Service) ListOrdersByClient(ctx context.Context, clientUserID string, limit, offset int) ([]OrderWithItems, error) {
-	// Set default limit if not provided
+func clampLimit(limit int) int {
 	if limit <= 0 {
-		limit = 20
+		return 50
 	}
 	if limit > 100 {
-		limit = 100
+		return 100
 	}
+	return limit
+}
+
+// ListOrdersByClient retrieves orders for a specific client
+func (s *Service) ListOrdersByClient(ctx context.Context, clientUserID string, limit, offset int) ([]OrderWithItems, error) {
+	limit = clampLimit(limit)
 
 	orders, err := s.repo.ListOrdersByClient(ctx, clientUserID, limit, offset)
 	if err != nil {
@@ -121,13 +120,7 @@ func (s *Service) ListOrdersByClient(ctx context.Context, clientUserID string, l
 
 // ListOrdersByRestaurant retrieves orders for a specific restaurant
 func (s *Service) ListOrdersByRestaurant(ctx context.Context, restaurantID string, limit, offset int) ([]OrderWithItems, error) {
-	// Set default limit if not provided
-	if limit <= 0 {
-		limit = 20
-	}
-	if limit > 100 {
-		limit = 100
-	}
+	limit = clampLimit(limit)
 
 	orders, err := s.repo.ListOrdersByRestaurant(ctx, restaurantID, limit, offset)
 	if err != nil {
@@ -145,7 +138,10 @@ func (s *Service) ListOrdersByRestaurant(ctx context.Context, restaurantID strin
 func (s *Service) UpdateOrderStatus(ctx context.Context, orderID string, req UpdateOrderStatusRequest) error {
 	// Validate status transition
 	if err := s.validateStatusTransition(ctx, orderID, req.Status); err != nil {
-		return fmt.Errorf("invalid status transition: %w", err)
+		if errors.Is(err, ErrOrderNotFound) {
+			return err
+		}
+		return fmt.Errorf("%w: %v", ErrInvalidTransition, err)
 	}
 
 	// A customer cancellation is a normal navigation abort, not an E-stop. Send
@@ -159,7 +155,7 @@ func (s *Service) UpdateOrderStatus(ctx context.Context, orderID string, req Upd
 
 	// Update status
 	if err := s.repo.UpdateOrderStatus(ctx, orderID, req.Status, req.CancelReason); err != nil {
-		if err == ErrOrderNotFound {
+		if errors.Is(err, ErrOrderNotFound) {
 			return err
 		}
 		s.log.Error("failed to update order status",
@@ -236,40 +232,6 @@ func (s *Service) validateCreateOrderRequest(req CreateOrderRequest) error {
 	if err := s.itemsSvc.ValidateItems(itemRequests); err != nil {
 		return err
 	}
-
-	return nil
-}
-
-// validateOrderTotal validates that the order total matches the sum of line items
-func (s *Service) validateOrderTotal(req CreateOrderRequest) error {
-	// Convert items to order_items format
-	itemRequests := make([]order_items.CreateItemRequest, len(req.Items))
-	for i, item := range req.Items {
-		itemRequests[i] = order_items.CreateItemRequest{
-			ProductID:      item.ProductID,
-			Quantity:       item.Quantity,
-			UnitPriceCents: item.UnitPriceCents,
-		}
-	}
-
-	// Calculate expected subtotal using items service
-	calculatedSubtotal := s.itemsSvc.CalculateSubtotal(itemRequests)
-
-	// Calculate expected total
-	expectedTotal := calculatedSubtotal + req.DeliveryFeeCents - req.DiscountCents
-
-	// Ensure total is not negative
-	if expectedTotal < 0 {
-		return fmt.Errorf("order total cannot be negative (subtotal: %d, delivery: %d, discount: %d)",
-			calculatedSubtotal, req.DeliveryFeeCents, req.DiscountCents)
-	}
-
-	s.log.Debug("order total validated",
-		"calculated_subtotal", calculatedSubtotal,
-		"delivery_fee", req.DeliveryFeeCents,
-		"discount", req.DiscountCents,
-		"expected_total", expectedTotal,
-	)
 
 	return nil
 }

@@ -7,7 +7,6 @@ import '../theme/app_theme.dart';
 // ─── HAPTIC HELPERS ────────────────────────────────────────────────
 void hapticLight() => HapticFeedback.lightImpact();
 void hapticMedium() => HapticFeedback.mediumImpact();
-void hapticSuccess() => HapticFeedback.selectionClick();
 
 // ─── APP BUTTON ────────────────────────────────────────────────────
 class AppButton extends StatelessWidget {

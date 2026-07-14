@@ -49,28 +49,4 @@ class Product {
         'sort_order': sortOrder,
         'quantity': quantity,
       };
-
-  Product copyWith({
-    String? id,
-    String? restaurantId,
-    String? name,
-    String? description,
-    String? emoji,
-    double? price,
-    bool? isAvailable,
-    int? sortOrder,
-    int? quantity,
-  }) {
-    return Product(
-      id: id ?? this.id,
-      restaurantId: restaurantId ?? this.restaurantId,
-      name: name ?? this.name,
-      description: description ?? this.description,
-      emoji: emoji ?? this.emoji,
-      price: price ?? this.price,
-      isAvailable: isAvailable ?? this.isAvailable,
-      sortOrder: sortOrder ?? this.sortOrder,
-      quantity: quantity ?? this.quantity,
-    );
-  }
 }

@@ -155,65 +155,6 @@ func TestValidateCreateOrderRequest(t *testing.T) {
 	}
 }
 
-func TestValidateOrderTotal(t *testing.T) {
-	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelError}))
-	mockItemsSvc := &mockItemsService{}
-	svc := &Service{itemsSvc: mockItemsSvc, log: log}
-
-	tests := []struct {
-		name    string
-		req     CreateOrderRequest
-		wantErr bool
-	}{
-		{
-			name: "valid total calculation",
-			req: CreateOrderRequest{
-				DeliveryFeeCents: 500,
-				DiscountCents:    100,
-				Items: []CreateOrderItem{
-					{ProductID: "prod-1", Quantity: 2, UnitPriceCents: 1000}, // 2000
-					{ProductID: "prod-2", Quantity: 1, UnitPriceCents: 500},  // 500
-				},
-				// Subtotal: 2500, Delivery: 500, Discount: 100 = Total: 2900
-			},
-			wantErr: false,
-		},
-		{
-			name: "negative total",
-			req: CreateOrderRequest{
-				DeliveryFeeCents: 100,
-				DiscountCents:    5000,
-				Items: []CreateOrderItem{
-					{ProductID: "prod-1", Quantity: 1, UnitPriceCents: 1000}, // 1000
-				},
-				// Subtotal: 1000, Delivery: 100, Discount: 5000 = Total: -3900 (invalid)
-			},
-			wantErr: true,
-		},
-		{
-			name: "zero total is valid",
-			req: CreateOrderRequest{
-				DeliveryFeeCents: 0,
-				DiscountCents:    1000,
-				Items: []CreateOrderItem{
-					{ProductID: "prod-1", Quantity: 1, UnitPriceCents: 1000}, // 1000
-				},
-				// Subtotal: 1000, Delivery: 0, Discount: 1000 = Total: 0 (valid)
-			},
-			wantErr: false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := svc.validateOrderTotal(tt.req)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("validateOrderTotal() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestValidateStatusTransition(t *testing.T) {
 	tests := []struct {
 		name          string
@@ -303,6 +244,27 @@ func TestCancelOrderDoesNotPersistWhenMQTTPublishFails(t *testing.T) {
 	}
 }
 
+func TestClampLimit(t *testing.T) {
+	tests := []struct {
+		name  string
+		limit int
+		want  int
+	}{
+		{name: "zero uses default", limit: 0, want: 50},
+		{name: "negative uses default", limit: -10, want: 50},
+		{name: "small values pass through", limit: 10, want: 10},
+		{name: "large values capped", limit: 200, want: 100},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := clampLimit(tt.limit); got != tt.want {
+				t.Fatalf("clampLimit(%d) = %d, want %d", tt.limit, got, tt.want)
+			}
+		})
+	}
+}
+
 // mockRepository is a simple mock for testing
 type mockRepository struct {
 	order         *OrderWithItems
@@ -383,14 +345,6 @@ func (m *mockItemsService) ValidateItems(items []order_items.CreateItemRequest) 
 		}
 	}
 	return nil
-}
-
-func (m *mockItemsService) CalculateSubtotal(items []order_items.CreateItemRequest) int {
-	subtotal := 0
-	for _, item := range items {
-		subtotal += item.UnitPriceCents * item.Quantity
-	}
-	return subtotal
 }
 
 func (m *mockItemsService) GetItemsByOrderID(ctx context.Context, orderID string) ([]order_items.OrderItem, error) {

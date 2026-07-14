@@ -1,27 +1,8 @@
 // lib/screens/login_screen.dart
 //
-// MARMITRON 3000 — First Contact / Login Screen
-// ─────────────────────────────────────────────────────────────────────────────
-// FIX #1 — Role Selector: Added a segmented pill control (Cliente / Restaurante)
-//           rendered directly in the form body. _selectedRole drives navigation:
-//           'client'     → ClientHomeScreen()
-//           'restaurant' → RestaurantHomeScreen()
-//           Both roles share the same form fields; the Submit handler reads
-//           _selectedRole at invocation time so the toggle is stateless w.r.t.
-//           the form validation logic.
-//
-// FIX #2 — State Hydration ("Maria Silva" bug):
-//           • Added _nameCtrl TextEditingController for the Sign-Up name field.
-//             Previously the name _InputField was constructed with no controller,
-//             making the value unreachable from _handleSubmit().
-//           • _handleSubmit() now calls updateUser() BEFORE Navigator.pushReplacement
-//             so the global userStateNotifier is populated before ClientHomeScreen
-//             (or RestaurantHomeScreen) renders its first frame.
-//           • Sign-Up path: uses typed name + email directly.
-//           • Login path: derives a display name from the email local-part
-//             (e.g. "joao@unb.br" → "Joao") via _nameFromEmail() so the Home
-//             screen greeting is immediately personalised.
-//           • Controllers are disposed correctly in dispose().
+// Login / role selector (Cliente / Restaurante). _selectedRole drives
+// navigation to ClientHomeScreen or RestaurantHomeScreen; _handleSubmit()
+// populates userStateNotifier via updateUser() before navigating.
 // ignore_for_file: prefer_const_constructors
 
 import 'package:flutter/material.dart';

@@ -580,8 +580,7 @@ class _ActiveOrderCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Color(
-                    int.parse('FF${order.restaurant.bgColor}', radix: 16)),
+                color: hexBg(order.restaurant.bgColor),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -739,7 +738,7 @@ class _OrderListTile extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: Color(int.parse('FF${order.restaurant.bgColor}', radix: 16)),
+              color: hexBg(order.restaurant.bgColor),
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
@@ -913,7 +912,7 @@ class _RestaurantCard extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 color:
-                    Color(int.parse('FF${restaurant.bgColor}', radix: 16)),
+                    hexBg(restaurant.bgColor),
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(8)),
               ),
@@ -1080,9 +1079,7 @@ class _SearchTabState extends State<_SearchTab> {
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    color: Color(
-                                      int.parse('FF${r.bgColor}', radix: 16),
-                                    ),
+                                    color: hexBg(r.bgColor),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Center(

@@ -34,6 +34,16 @@ class AppColors {
   static const statusPendingText = Color(0xFFB97A00);
 }
 
+Color hexBg(String hex) {
+  var s = hex.trim();
+  if (s.startsWith('#')) s = s.substring(1);
+  final value = int.tryParse(s, radix: 16);
+  if (value == null || s.length != 6) {
+    return const Color(0xFFF5F5F5);
+  }
+  return Color(0xFF000000 | value);
+}
+
 /// Resolves adaptive colors from BuildContext brightness.
 class AC {
   static Color primary(BuildContext context) =>

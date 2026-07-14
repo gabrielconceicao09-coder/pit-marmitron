@@ -220,9 +220,7 @@ class _OrderScreenState extends State<OrderScreen> {
           SliverToBoxAdapter(
             child: Container(
               height: 120,
-              color: Color(
-                int.parse('FF${widget.restaurant.bgColor}', radix: 16),
-              ),
+              color: hexBg(widget.restaurant.bgColor),
               child: Stack(
                 children: [
                   Center(
@@ -286,7 +284,7 @@ class _OrderScreenState extends State<OrderScreen> {
                       style: TextStyle(color: AC.muted(context)))
                 else
                   DropdownButtonFormField<DeliveryPoint>(
-                    initialValue: _selectedDeliveryPoint,
+                    value: _selectedDeliveryPoint,
                     isExpanded: true,
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.location_on_outlined),

@@ -36,14 +36,10 @@ class RestaurantService {
     }
 
     final data = jsonDecode(response.body) as Map<String, dynamic>;
-    return _restaurantDetailsFromJson(data);
+    return Restaurant.fromJson(data);
   }
 
   Restaurant _restaurantFromJson(Map<String, dynamic> json) {
     return Restaurant.fromJson(json).copyWith(products: const []);
-  }
-
-  Restaurant _restaurantDetailsFromJson(Map<String, dynamic> json) {
-    return Restaurant.fromJson(json);
   }
 }

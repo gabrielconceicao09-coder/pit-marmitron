@@ -1,64 +1,16 @@
 // lib/state/active_order_state.dart
 //
-// Global state for ALL in-flight delivery orders (multi-order support).
+// Global state for all in-flight delivery orders (multi-order support).
 //
-// ARCHITECTURE RATIONALE
-// ──────────────────────
-// Upgraded from ValueNotifier<ActiveOrder?> to ValueNotifier<List<ActiveOrder>>
-// to support concurrent orders placed at different restaurants.
-//
-// CRITICAL INVARIANT — immutable swap:
-//   ValueNotifier fires listeners only when its .value reference changes.
-//   Calling activeOrdersNotifier.value.add(order) mutates the existing list
-//   IN PLACE and does NOT trigger a rebuild. Every mutation must create a
-//   new list and assign it to .value. The helpers addOrder() / removeOrder()
-//   enforce this invariant at the call site — callers must never mutate
-//   the list directly.
-//
-// ORDER HISTORY INTEGRATION (2025 refactor)
-// ──────────────────────────────────────────
-// removeOrder() now archives the departing order into pastOrdersNotifier
-// (defined in user_state.dart) BEFORE removing it from the active list.
-// This guarantees:
-//   1. The archive step and the active-list removal are visually atomic —
-//      no frame exists where an order is neither active nor archived.
-//   2. The caller controls the `reason` label ('completed' | 'cancelled')
-//      so the history UI can show appropriate badges.
-//
-// IMPORT GRAPH (acyclic)
-// ───────────────────────
-//   active_order_state.dart  imports  user_state.dart  ✓
-//   user_state.dart          does NOT import  active_order_state.dart  ✓
-//
-// LIFETIME
-// ────────
-// Top-level final, instantiated once at program start, never disposed.
-// Identical lifetime model to themeModeNotifier in main.dart.
-//
-// USAGE PATTERN
-// ─────────────
-// Append (from order_screen.dart after a successful dispatch):
-//   addOrder(ActiveOrder(result: result, restaurant: r, ...));
-//
-// Remove after delivery confirmed (code_screen.dart — OTP validated):
-//   removeOrder(order.orderId, reason: 'completed');
-//
-// Remove after user cancels (tracking_screen.dart — cancel dialog):
-//   removeOrder(order.orderId, reason: 'cancelled');
-//
-// Read (in any widget):
-//   ValueListenableBuilder<List<ActiveOrder>>(
-//     valueListenable: activeOrdersNotifier,
-//     builder: (context, orders, _) {
-//       if (orders.isEmpty) return const _EmptyState();
-//       return ListView(children: orders.map((o) => _OrderCard(o)).toList());
-//     },
-//   )
+// Invariant — immutable swap: ValueNotifier only fires when .value's reference
+// changes, so addOrder()/removeOrder() always assign a new list, never mutate
+// in place. removeOrder() archives the order into pastOrdersNotifier
+// (user_state.dart) before removing it, so no frame shows it as neither active
+// nor archived. Top-level final, instantiated once, never disposed.
 
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../services/api_service.dart';
-// ORDER HISTORY: import archivePastOrder() from user_state — one-way dependency.
 import 'user_state.dart';
 
 // ─── ActiveOrder ─────────────────────────────────────────────────────────────

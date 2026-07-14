@@ -53,49 +53,6 @@ class OrderService {
     return OrderWithItems.fromJson(orderData);
   }
 
-  /// Get order by ID
-  Future<OrderWithItems> getOrderById(String orderId) async {
-    final uri = Uri.parse('${ApiService.baseUrl}/api/orders/$orderId');
-
-    final response = await http.get(uri).timeout(ApiService.apiTimeout);
-
-    if (response.statusCode == 404) {
-      throw Exception('Order not found');
-    }
-
-    if (response.statusCode != 200) {
-      final error = _extractError(response.body);
-      throw Exception('Failed to get order: $error');
-    }
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    return OrderWithItems.fromJson(data);
-  }
-
-  /// List orders for a client
-  Future<OrderListResponse> listOrdersByClient(
-    String clientId, {
-    int limit = 20,
-    int offset = 0,
-  }) async {
-    final uri = Uri.parse(
-            '${ApiService.baseUrl}/api/clients/$clientId/orders')
-        .replace(queryParameters: {
-      'limit': limit.toString(),
-      'offset': offset.toString(),
-    });
-
-    final response = await http.get(uri).timeout(ApiService.apiTimeout);
-
-    if (response.statusCode != 200) {
-      final error = _extractError(response.body);
-      throw Exception('Failed to list orders: $error');
-    }
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    return _orderListResponseFromJson(data);
-  }
-
   /// List orders for a restaurant
   Future<OrderListResponse> listOrdersByRestaurant(
     String restaurantId, {

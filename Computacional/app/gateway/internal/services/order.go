@@ -1,29 +1,7 @@
 // internal/services/order.go
 //
-// CHANGES IN THIS REVISION (Phase 1 — Live Navigation)
-// ──────────────────────────────────────────────────────
-// EXTENDED: NavigatePayload now carries map_frame and theta so Nav2 can
-//
-//	receive a full PoseStamped. Previous payload only had {x, y} which is
-//	insufficient for Nav2's /navigate_to_pose action server — it requires
-//	orientation (yaw) to determine the robot's heading at the goal.
-//
-// ADDED: WaypointRegistry — a compile-time map of named campus locations to
-//
-//	ROS 2 map-frame coordinates. The Go backend no longer hardcodes
-//	{x: 12.0, y: -3.5}. The Flutter client sends a named destination string
-//	(e.g. "FT_ENTRADA"), and Dispatch() resolves it to a full Pose.
-//	This registry will be replaced by a database table in Phase 2, but the
-//	interface (LookupWaypoint) is already abstracted so the swap is local.
-//
-// CHANGED: Destination struct now includes MapFrame and Theta.
-//
-//	Callers (dispatch.go) that previously supplied {X, Y} must now also
-//	supply the waypoint name and let Dispatch resolve it, OR supply all
-//	fields explicitly. dispatch.go is updated in this same revision to
-//	accept a waypoint_name field in the HTTP body.
-//
-// UNCHANGED: WakeDisplayService, OTPService wiring, GatewayMode constants.
+// Order dispatch: resolves a named waypoint to a full ROS 2 pose, issues an OTP,
+// and publishes the navigate command over MQTT. Also holds WakeDisplayService.
 package services
 
 import (

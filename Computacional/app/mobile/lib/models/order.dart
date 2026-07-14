@@ -162,35 +162,3 @@ class OrderWithItems {
 
 /// Order status enum
 enum OrderStatus { pending, preparing, onTheWay, delivered, cancelled }
-
-extension OrderStatusExt on OrderStatus {
-  String get label {
-    switch (this) {
-      case OrderStatus.pending:
-        return 'Pendente';
-      case OrderStatus.preparing:
-        return 'Em preparo';
-      case OrderStatus.onTheWay:
-        return 'A caminho';
-      case OrderStatus.delivered:
-        return 'Entregue';
-      case OrderStatus.cancelled:
-        return 'Cancelado';
-    }
-  }
-
-  String get value {
-    switch (this) {
-      case OrderStatus.pending:
-        return 'pending';
-      case OrderStatus.preparing:
-        return 'preparing';
-      case OrderStatus.onTheWay:
-        return 'on_the_way';
-      case OrderStatus.delivered:
-        return 'delivered';
-      case OrderStatus.cancelled:
-        return 'cancelled';
-    }
-  }
-}

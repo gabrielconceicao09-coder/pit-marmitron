@@ -1,25 +1,8 @@
 // internal/services/otp.go
 //
-// CHANGES IN THIS REVISION (Phase 1.5 — On-Demand Display)
-// ──────────────────────────────────────────────────────────
-//
-//   - LookupByOrderID(orderID) — reverse lookup needed by WakeDisplayService
-//     so the wake-display handler can retrieve the OTP for an already-dispatched
-//     order without touching the validate/consume path.
-//
-//   - TopicDisplayQR constant moved here from order.go so all MQTT topic strings
-//     live in a single file.
-//
-// STORE KEY DESIGN NOTE:
-//
-//	The store is keyed by `code` (not orderID) because ValidateAndUnlock
-//	receives a code from the user and must look it up in O(1). LookupByOrderID
-//	does a linear scan — acceptable because:
-//	  a) The store is bounded: university campus concurrency is O(10s) of orders.
-//	  b) The scan is read-only under the mutex; no write contention.
-//	  c) Adding a second map[orderID]code would require dual writes on IssueOTP
-//	     and dual deletes on any future eviction — not worth it for this scale.
-//	If you ever need O(1) reverse lookup, add the second map then.
+// In-memory OTP store, keyed by `code` for O(1) ValidateAndUnlock. LookupByOrderID
+// is a linear scan — acceptable at campus scale (O(10s) of orders); add a
+// map[orderID]code if O(1) reverse lookup is ever needed.
 package services
 
 import (

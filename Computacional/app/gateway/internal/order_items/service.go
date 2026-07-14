@@ -12,13 +12,11 @@ import (
 type RepositoryInterface interface {
 	CreateItems(ctx context.Context, tx pgx.Tx, orderID string, items []CreateItemRequest) ([]OrderItem, error)
 	GetItemsByOrderID(ctx context.Context, orderID string) ([]OrderItem, error)
-	CalculateSubtotal(items []CreateItemRequest) int
 }
 
 // ServiceInterface defines the contract for order items service operations
 type ServiceInterface interface {
 	ValidateItems(items []CreateItemRequest) error
-	CalculateSubtotal(items []CreateItemRequest) int
 	ValidateItemTotals(items []OrderItem) error
 	GetItemsByOrderID(ctx context.Context, orderID string) ([]OrderItem, error)
 	CreateItems(ctx context.Context, tx pgx.Tx, orderID string, items []CreateItemRequest) ([]OrderItem, error)
@@ -71,19 +69,7 @@ func (s *Service) validateItem(index int, item CreateItemRequest) error {
 		}
 	}
 
-	if item.UnitPriceCents < 0 {
-		return &ItemValidationError{
-			Field:   fmt.Sprintf("items[%d].unit_price_cents", index),
-			Message: "unit_price_cents cannot be negative",
-		}
-	}
-
 	return nil
-}
-
-// CalculateSubtotal calculates the subtotal from items
-func (s *Service) CalculateSubtotal(items []CreateItemRequest) int {
-	return s.repo.CalculateSubtotal(items)
 }
 
 // ValidateItemTotals ensures each item's total matches quantity * unit_price

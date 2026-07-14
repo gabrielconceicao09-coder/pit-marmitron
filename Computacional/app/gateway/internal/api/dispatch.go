@@ -1,55 +1,25 @@
 // internal/api/dispatch.go
 //
-// CHANGES IN THIS REVISION (Phase 1 — Live Navigation)
-// ──────────────────────────────────────────────────────
-// CHANGED: dispatchRequest now accepts waypoint_name (preferred) as an
-//
-//	alternative to raw x/y coordinates. If waypoint_name is provided,
-//	x/y coordinate validation is skipped — the registry lookup in
-//	OrderService.Dispatch() performs its own validation.
-//
-// ADDED: GET /api/waypoints handler registered in server.go (new endpoint).
-//
-//	Returns the list of named waypoints so Flutter can populate a picker.
-//
-// UNCHANGED: NaN/Inf coordinate validation, error mapping, writeJSON helper.
+// POST /api/orders/{id}/dispatch — resolves a named waypoint and dispatches
+// the order via OrderService.Dispatch.
 package api
 
 import (
 	"encoding/json"
 	"errors"
-	"math"
 	"net/http"
 	"strings"
 
 	"unbot-gateway/internal/services"
 )
 
-// ── Request / Response types ──────────────────────────────────────────────────
+// ── Request type ──────────────────────────────────────────────────────────────
 
-type destinationRequest struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-}
-
-// dispatchRequest is extended with waypoint_name.
-//
-// Two valid calling modes:
-//
-//	MODE A — named waypoint (preferred, used by Flutter production app):
-//	  { "waypoint_name": "FT_ENTRADA", "restaurant_name": "Marmitas da Vó" }
-//	  Coordinates are resolved from the registry. x/y/destination ignored.
-//
-//	MODE B — explicit coordinates (used by tests and legacy callers):
-//	  { "destination": {"x": 12.0, "y": -3.5}, "restaurant_name": "..." }
-//	  waypoint_name is empty. x/y are validated for NaN/Inf.
-//	  Theta defaults to 0.0, map_frame defaults to "map".
+// dispatchRequest carries the named delivery point. Coordinates are resolved
+// server-side from the calibrated delivery-point source.
 type dispatchRequest struct {
-	Destination    destinationRequest `json:"destination"`
-	RestaurantName string             `json:"restaurant_name"`
-	// WaypointName is the preferred way to specify a destination.
-	// When non-empty, Destination is ignored.
-	WaypointName string `json:"waypoint_name"`
+	RestaurantName string `json:"restaurant_name"`
+	WaypointName   string `json:"waypoint_name"`
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -83,23 +53,7 @@ func (s *Server) dispatchHandler(orderSvc *services.OrderService) http.HandlerFu
 			return
 		}
 
-		var dest services.Destination
-
-		if req.WaypointName != "" {
-			// MODE A: named waypoint — let the service layer resolve coordinates.
-			dest.WaypointName = req.WaypointName
-		} else {
-			// MODE B: explicit coordinates — validate for NaN/Inf.
-			if !isFiniteCoord(req.Destination.X) || !isFiniteCoord(req.Destination.Y) {
-				writeJSON(w, http.StatusBadRequest,
-					errorResponse{Error: "destination coordinates must be finite numbers"})
-				return
-			}
-			dest.X = req.Destination.X
-			dest.Y = req.Destination.Y
-			dest.Theta = 0.0      // default heading
-			dest.MapFrame = "map" // default frame
-		}
+		dest := services.Destination{WaypointName: req.WaypointName}
 
 		// ── Delegate to service ───────────────────────────────────────────
 		result, err := orderSvc.Dispatch(r.Context(), orderID, dest)
@@ -140,28 +94,4 @@ func (s *Server) dispatchHandler(orderSvc *services.OrderService) http.HandlerFu
 
 		writeJSON(w, http.StatusOK, result)
 	}
-}
-
-// ── Waypoints handler ─────────────────────────────────────────────────────────
-//
-// GET /api/waypoints
-// Returns the list of named delivery destinations so Flutter can populate
-// a destination picker without hardcoding waypoint keys.
-
-type waypointsResponse struct {
-	Waypoints []string `json:"waypoints"`
-}
-
-func (s *Server) listWaypointsHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, waypointsResponse{
-			Waypoints: services.ListWaypoints(),
-		})
-	}
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-func isFiniteCoord(f float64) bool {
-	return !math.IsNaN(f) && !math.IsInf(f, 0)
 }

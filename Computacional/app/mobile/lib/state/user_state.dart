@@ -1,67 +1,20 @@
 // lib/state/user_state.dart
 //
-// GLOBAL USER IDENTITY & ORDER HISTORY
-// ──────────────────────────────────────────────────────────────────────────────
+// Global user identity & order history.
 //
-// ARCHITECTURE
-// ────────────
-// Two top-level ValueNotifiers live here:
+// Two top-level ValueNotifiers:
+//   userStateNotifier   — logged-in user's identity (name, email, address).
+//   pastOrdersNotifier  — append-only archive of completed/cancelled orders,
+//                         fed by removeOrder() in active_order_state.dart.
 //
-//   userStateNotifier      — reactive single source of truth for the logged-in
-//                            user's identity. Any widget that reads name, email,
-//                            or address wraps itself in a ValueListenableBuilder
-//                            on this notifier and rebuilds automatically when
-//                            the profile is saved.
-//
-//   pastOrdersNotifier     — append-only archive of completed / cancelled
-//                            orders. Fed exclusively by removeOrder() in
-//                            active_order_state.dart. The Profile screen's
-//                            "Histórico de pedidos" sheet reads from this.
-//
-// IMMUTABILITY INVARIANT (same rule as activeOrdersNotifier)
-// ───────────────────────────────────────────────────────────
-// ValueNotifier fires listeners only when its .value *reference* changes.
-// Both helpers below (updateUser, archiveOrder) always assign a brand-new
-// object / list — never mutate in place.
-//
-// IMPORT GRAPH (acyclic by design)
-// ─────────────────────────────────
-//   user_state.dart        imports  active_order_state.dart  (for ActiveOrder)
-//   active_order_state.dart imports  user_state.dart          (for archiveOrder)
-//
-// Wait — that would be a circular import. To break the cycle, pastOrdersNotifier
-// is defined HERE but archiveOrder() is also defined here. active_order_state.dart
-// calls archiveOrder() from this file. user_state.dart only imports models.dart
-// and api_service.dart — never active_order_state.dart. Clean DAG.
+// Immutability invariant: helpers always assign a new object/list (never mutate
+// in place) so ValueNotifier fires. This file must NOT import
+// active_order_state.dart (that file imports this one — keep the DAG acyclic).
 
 import 'package:flutter/foundation.dart';
-// for ActiveOrder type via active_order_state
-
-// Re-export ActiveOrder so callers only need one import if desired.
-// (ActiveOrder is defined in active_order_state.dart — we import it below
-//  only from the models-adjacent file to avoid the cycle.)
-//
-// ⚠️  ActiveOrder lives in active_order_state.dart, which imports THIS file.
-//     Therefore THIS file must NOT import active_order_state.dart.
-//     We forward-declare the archive helper as a void Function(dynamic) and
-//     cast at the call site — no: cleaner solution below.
-//
-// SOLUTION: pastOrdersNotifier stores ActiveOrder instances via the
-// already-imported api_service.dart barrel. active_order_state.dart imports
-// user_state.dart (one-way) and calls archiveOrder() defined here.
-// The type ActiveOrder is forward-referenced through the import in
-// active_order_state.dart itself — Dart resolves this fine because both
-// files import models.dart and api_service.dart; there is no actual circular
-// dependency at the type level.
-//
-// In practice: active_order_state.dart imports user_state.dart ✓
-//              user_state.dart does NOT import active_order_state.dart ✓
 
 // ─── UserModel ────────────────────────────────────────────────────────────────
-//
-// Fully immutable value object. copyWith() is the ONLY mutation surface —
-// it returns a new instance, guaranteeing ValueNotifier fires its listeners
-// every time updateUser() is called.
+// Immutable value object. copyWith() is the only mutation surface.
 class UserModel {
   /// User ID from backend (used for API calls)
   final String id;

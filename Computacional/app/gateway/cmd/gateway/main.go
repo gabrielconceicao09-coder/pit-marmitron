@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -32,7 +33,7 @@ func main() {
 		"mqtt_host", cfg.MQTTHost,
 		"mqtt_port", cfg.MQTTPort,
 		"http_addr", cfg.HTTPAddr,
-		"database_url", cfg.DatabaseURL,
+		"database_url", redactDatabaseURL(cfg.DatabaseURL),
 	)
 
 	mqttCfg := mqttclient.NewClient(cfg, log)
@@ -124,4 +125,12 @@ func main() {
 	}
 
 	log.Info("gateway stopped cleanly")
+}
+
+func redactDatabaseURL(raw string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return "[unparseable database url redacted]"
+	}
+	return u.Redacted()
 }

@@ -1,18 +1,7 @@
 // lib/services/api_service.dart
 //
-// CHANGES IN THIS REVISION (Phase 1.5 — On-Demand Display)
-// ──────────────────────────────────────────────────────────
-// + wakeDisplay(orderId) — calls POST /api/orders/{id}/wake-display.
-//   Returns a sealed WakeDisplayResult hierarchy so code_screen.dart
-//   never sees raw status codes or http.Response objects.
-//
-// SEALED CLASS: WakeDisplayResult
-//   WakeDisplayTriggered  — HTTP 200, ESP32 is rendering the QR.
-//   WakeDisplayNotFound   — HTTP 404, order unknown or already completed.
-//   WakeDisplayUnreachable — HTTP 502, MQTT broker down; fallback to manual.
-//   WakeDisplayNetworkError — timeout / socket error.
-//
-// All other methods (validateOtp, dispatchOrder) are unchanged.
+// HTTP client for the gateway API. Methods return sealed result hierarchies
+// (WakeDisplayResult, UnlockResult, ...) so callers never see raw status codes.
 // ignore_for_file: prefer_const_constructors
 
 import 'dart:async';

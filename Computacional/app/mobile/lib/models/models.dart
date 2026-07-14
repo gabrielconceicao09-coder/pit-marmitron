@@ -1,5 +1,4 @@
 // Export all model files
-export 'user.dart';
 export 'restaurant.dart';
 export 'product.dart';
 export 'order.dart';

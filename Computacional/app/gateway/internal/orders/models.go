@@ -15,12 +15,6 @@ const (
 	StatusCancelled = "cancelled"
 )
 
-// Gateway mode constants
-const (
-	GatewayModeFull    = "full"
-	GatewayModeOTPOnly = "otp_only"
-)
-
 // Order represents a customer order
 type Order struct {
 	ID               string     `json:"id"`
@@ -74,13 +68,4 @@ type CreateOrderItem struct {
 type UpdateOrderStatusRequest struct {
 	Status       string  `json:"status"`
 	CancelReason *string `json:"cancel_reason,omitempty"`
-}
-
-// OrderListFilter represents filters for listing orders
-type OrderListFilter struct {
-	ClientUserID *string
-	RestaurantID *string
-	Status       *string
-	Limit        int
-	Offset       int
 }

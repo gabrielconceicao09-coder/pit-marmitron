@@ -1,8 +1,4 @@
 // internal/api/server.go
-//
-// CHANGES IN THIS REVISION (Phase 1):
-//   - GET /api/waypoints registered via listWaypointsHandler().
-//     All other routes and wiring are unchanged.
 package api
 
 import (

@@ -1,33 +1,10 @@
 // internal/api/wake_display.go
 //
-// POST /api/orders/{id}/wake-display
+// POST /api/orders/{id}/wake-display — tells the ESP32 to render the order's QR.
+// Idempotent: re-publishes the same display_qr payload; does NOT consume the OTP
+// (only POST /api/validate-code does). Error mapping:
 //
-// Triggers the ESP32 to render the QR Code for the given order on its OLED.
-// Called by the Flutter app immediately before opening the QR scanner screen.
-//
-// RESPONSIBILITY BOUNDARY:
-//
-//	This handler is a pure HTTP↔service translation layer, identical in
-//	philosophy to validate.go and dispatch.go. Zero business logic lives here.
-//
-// IDEMPOTENCY:
-//
-//	Safe to call multiple times for the same order. Each call re-publishes
-//	the same display_qr payload — the ESP32 re-renders the same QR (idempotent
-//	display operation). The OTP is NOT consumed by this endpoint; only
-//	POST /api/validate-code consumes it.
-//
-// SEQUENCING CONTRACT (enforced by firmware, not here):
-//
-//	The ESP32 stores the pending order_id from display_qr and cross-validates
-//	it against the incoming unlock command. This handler does not need to
-//	enforce sequencing — that invariant lives in firmware onUnlock().
-//
-// ERROR MAPPING:
-//
-//	ErrOrderNotFound → 404  (order never dispatched, or OTP already consumed)
-//	ErrWakeDisplay   → 502  (MQTT broker unreachable)
-//	default          → 500
+//	ErrOrderNotFound → 404   ErrWakeDisplay → 502   default → 500
 package api
 
 import (
