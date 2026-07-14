@@ -14,6 +14,5 @@ Projeto de robô autônomo de delivery de marmitas chamado "Marmitron 3000", par
 
 As instrucoes para demonstracao MQTT, Wokwi e ROS/Nav2 estao em:
 
-```text
-Computacional/app/docs/DEMONSTRATION_QUICKSTART.md
-```
+[Guia de demonstração: APK, MQTT, Wokwi e ROS/Nav2](Computacional/app/docs/DEMONSTRATION_QUICKSTART.md)
+
