@@ -73,6 +73,9 @@ class _OperatorScreenState extends State<OperatorScreen>
     super.dispose();
   }
 
+  RobotTelemetry? get _freshTelemetry =>
+      _telemetry?.isStale == false ? _telemetry : null;
+
   // ── Data fetching ─────────────────────────────────────────────────────────
 
   Future<void> _fetchTelemetry() async {
@@ -251,7 +254,7 @@ class _OperatorScreenState extends State<OperatorScreen>
                 const SizedBox(height: 14),
                 _buildPoseCard(),
                 const SizedBox(height: 14),
-                if (_telemetry?.activeOrderId != null) ...[
+                if (_telemetry?.hasCurrentMission == true) ...[
                   _buildOrderCard(),
                   const SizedBox(height: 14),
                 ],
@@ -385,7 +388,8 @@ class _OperatorScreenState extends State<OperatorScreen>
   // ── State Card ────────────────────────────────────────────────────────────
 
   Widget _buildStateCard() {
-    final navState = _telemetry?.navState ?? RobotNavState.unknown;
+    final navState =
+        _telemetry?.displayedNavState ?? RobotNavState.unknown;
     final cfg = _navStateConfig(navState);
 
     return AppCard(
@@ -442,7 +446,7 @@ class _OperatorScreenState extends State<OperatorScreen>
   // ── Telemetry Grid ────────────────────────────────────────────────────────
 
   Widget _buildIntegrationReadinessCard() {
-    final hasPose = _telemetry?.pose != null;
+    final hasPose = _freshTelemetry?.pose != null;
     final cameraReady = _cameraConfig?.available == true;
     final allReady = hasPose && cameraReady;
     final locationMessage = _errorMsg != null
@@ -632,7 +636,7 @@ class _OperatorScreenState extends State<OperatorScreen>
   }
 
   Widget _buildTelemetryGrid() {
-    final t = _telemetry;
+    final t = _freshTelemetry;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -688,7 +692,8 @@ class _OperatorScreenState extends State<OperatorScreen>
             ),
           ],
         ),
-        if (t != null && t.navState == RobotNavState.navigating) ...[
+        if (t != null &&
+            t.displayedNavState == RobotNavState.navigating) ...[
           const SizedBox(height: 10),
           _ProgressCard(progressPct: t.progressPct),
         ],
@@ -699,7 +704,7 @@ class _OperatorScreenState extends State<OperatorScreen>
   // ── System Grid ───────────────────────────────────────────────────────────
 
   Widget _buildSystemGrid() {
-    final t = _telemetry;
+    final t = _freshTelemetry;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -734,9 +739,10 @@ class _OperatorScreenState extends State<OperatorScreen>
   // ── Pose Card ─────────────────────────────────────────────────────────────
 
   Widget _buildPoseCard() {
+    final telemetry = _freshTelemetry;
     final pose =
-        _telemetry?.pose ?? const RobotPose(x: 0, y: 0, theta: 0, frame: 'map');
-    final hasPose = _telemetry?.pose != null;
+        telemetry?.pose ?? const RobotPose(x: 0, y: 0, theta: 0, frame: 'map');
+    final hasPose = telemetry?.pose != null;
     return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -838,7 +844,7 @@ class _OperatorScreenState extends State<OperatorScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Pedido em execução',
+                  _telemetry!.missionLabel,
                   style: GoogleFonts.dmSans(
                     fontSize: 11,
                     color: AC.muted(context),
