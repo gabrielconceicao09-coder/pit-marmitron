@@ -51,7 +51,6 @@ void IRAM_ATTR EncoderISR::rotinaInterrupcao() {
 // ==========================================
 void EncoderISR::init() {
   pinMode(this->pinoA, INPUT);
-  // Alterado para RISING para maior precisão física e leitura constante
   attachInterruptArg(digitalPinToInterrupt(this->pinoA), isrWrapper, this, CHANGE);
 }
 

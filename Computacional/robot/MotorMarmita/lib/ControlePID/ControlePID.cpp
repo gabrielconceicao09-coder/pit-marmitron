@@ -7,8 +7,6 @@ PIDController::PIDController(float kp, float ki, float kd) {
   this->erro_anterior = 0.0;
   this->erro_integral = 0.0;
   this->Sentido = 1; // 1 para frente, -1 para ré
-  // this->limite_saida_min = -255.0; // Padrão genérico de PWM
-  // this->limite_saida_max = 255.0;
   this->ultimo_tempo = micros();
 }
 

@@ -5,7 +5,7 @@
 // Encoders - GPIO (PCNT)
 // ==========================================
 constexpr uint8_t PIN_ENC_ESQ = 33;
-constexpr uint8_t PIN_ENC_DIR = 32; // Também conhecido como VP
+constexpr uint8_t PIN_ENC_DIR = 35; // Também conhecido como VP
 
 // ==========================================
 // Ponte H - GPIO (PWM)
