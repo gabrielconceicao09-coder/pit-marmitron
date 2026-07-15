@@ -6,7 +6,7 @@ slam_toolbox:
     ceres_preconditioner: SCHUR_JACOBI
     ceres_trust_strategy: LEVENBERG_MARQUARDT
     ceres_dogleg_type: TRADITIONAL_DOGLEG
-    ceres_loss_function: None
+    ceres_loss_function: HuberLoss   
 
 
     odom_frame: odom
@@ -31,18 +31,18 @@ slam_toolbox:
     # General Parameters
     use_scan_matching: true
     use_scan_barycenter: true
-    minimum_travel_distance: 0.5
-    minimum_travel_heading: 0.5
-    scan_buffer_size: 10
-    scan_buffer_maximum_scan_distance: 10.0
+    minimum_travel_distance: 0.2
+    minimum_travel_heading: 0.15
+    scan_buffer_size: 30
+    scan_buffer_maximum_scan_distance: 12.0
     link_match_minimum_response_fine: 0.1  
     link_scan_maximum_distance: 1.5
     loop_search_maximum_distance: 3.0
     do_loop_closing: true 
-    loop_match_minimum_chain_size: 10           
+    loop_match_minimum_chain_size: 12           
     loop_match_maximum_variance_coarse: 3.0  
-    loop_match_minimum_response_coarse: 0.35    
-    loop_match_minimum_response_fine: 0.45
+    loop_match_minimum_response_coarse: 0.4    
+    loop_match_minimum_response_fine: 0.5
 
     # Correlation Parameters - Correlation Parameters
     correlation_search_space_dimension: 0.5
@@ -62,5 +62,5 @@ slam_toolbox:
     coarse_search_angle_offset: 0.349   
     coarse_angle_resolution: 0.0349        
     minimum_angle_penalty: 0.9
-    minimum_distance_penalty: 0.5
+    minimum_distance_penalty: 0.4
     use_response_expansion: true

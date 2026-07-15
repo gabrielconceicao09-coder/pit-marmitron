@@ -32,12 +32,12 @@ public:
             std::chrono::milliseconds(period_ms),
             std::bind(&FakeGps::timer_callback, this));
         
-        // Random noise generators for realistic GPS
+        // Random noise
         std::random_device rd;
         gen_ = std::mt19937(rd());
         noise_x_ = std::normal_distribution<>(0.0, 1.9947);  // erro de aproximadamente 2.5 m
         noise_y_ = std::normal_distribution<>(0.0, 1.9947);  // erro de aproximadamente 2.5 m
-        noise_z_ = std::normal_distribution<>(0.0, 3.0);  // 3.0m std in z (worse)
+        noise_z_ = std::normal_distribution<>(0.0, 3.0);
         
         RCLCPP_INFO(this->get_logger(), 
                     "Realistic GPS simulator started at %.1f Hz with datum: %.6f, %.6f", 
@@ -60,13 +60,13 @@ private:
             return;
         }
         
-        // Add realistic GPS noise to position
+       
         double x = latest_pose_.pose.position.x + noise_x_(gen_);
         double y = latest_pose_.pose.position.y + noise_y_(gen_);
         double z = latest_pose_.pose.position.z + noise_z_(gen_);
 
         // Convert meters to lat/lon using flat earth approximation
-        const double EARTH_RADIUS = 6378137.0;  // WGS84 equatorial radius
+        const double EARTH_RADIUS = 6378137.0; //approximation (veio da wiky)
         double dlat = (y / EARTH_RADIUS) * (180.0 / M_PI);
         double dlon = (x / (EARTH_RADIUS * std::cos(M_PI * datum_lat_ / 180.0))) * (180.0 / M_PI);
 
@@ -82,12 +82,11 @@ private:
         fix.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
         fix.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
 
-        // Realistic GPS covariance matrix
-        // Diagonal: variance in m^2 (std_dev^2)
+        // Realistic GPS covariance (Sinceramente não sei exatamente como essa parte funciona, mas é necessário para a mensagem)
         fix.position_covariance = {
-            2.25, 0.0,  0.0,    // (1.5m)^2 = 2.25 in lat
-            0.0,  2.25, 0.0,    // (1.5m)^2 = 2.25 in lon
-            0.0,  0.0,  9.0     // (3.0m)^2 = 9.0 in altitude
+            2.25, 0.0,  0.0,   
+            0.0,  2.25, 0.0,    
+            0.0,  0.0,  9.0     
         };
         fix.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
 
@@ -107,7 +106,7 @@ private:
     double datum_lat_;
     double datum_lon_;
     
-    // Random noise generators
+    // Random noise
     std::mt19937 gen_;
     std::normal_distribution<> noise_x_;
     std::normal_distribution<> noise_y_;

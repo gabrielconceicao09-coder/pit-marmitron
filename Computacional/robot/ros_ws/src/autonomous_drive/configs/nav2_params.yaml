@@ -80,7 +80,7 @@ controller_server:
       vx_samples: 20
       vy_samples: 0
       vtheta_samples: 20
-      sim_time: 2.0
+      sim_time: 1.7
       linear_granularity: 0.05
       angular_granularity: 0.025
       transform_tolerance: 0.3
@@ -91,7 +91,7 @@ controller_server:
       critics: ["RotateToGoal","Oscillation" , "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
       RotateToGoal.slowing_factor: 5.0    
       RotateToGoal.lookahead_time: 0.5
-      BaseObstacle.scale: 0.01
+      BaseObstacle.scale: 25.0
       Oscillation.scale: 1.0 
       oscillation_reset_dist: 1.0
       oscillation_reset_angle: 0.5
@@ -122,13 +122,13 @@ local_costmap:
       width: 5
       height: 5
       resolution: 0.05
-      footprint: "[[-0.25, -0.235], [0.35, -0.235], [0.35, 0.235], [-0.25, 0.235]]"   # CONFIRM matches real footprint
+      footprint: "[[-0.25, -0.235], [0.35, -0.235], [0.35, 0.235], [-0.25, 0.235]]"
       footprint_padding: 0.1
       plugins: ["lidar_obstacle_layer", "sonar_layer", "inflation_layer"]
       
       lidar_obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
-        enabled: true
+        enabled: false
         combination_method: 1            
         clearable_area_radius: 5.0       
         observation_sources: scan
@@ -139,7 +139,7 @@ local_costmap:
           marking: true
           data_type: "LaserScan"
           obstacle_max_range: 11.0       
-          obstacle_min_range: 0.5        
+          obstacle_min_range: 0.05        
           raytrace_max_range: 12.0       
           raytrace_min_range: 0.0
           expected_update_rate: 0.15
@@ -147,7 +147,7 @@ local_costmap:
       sonar_layer:
         plugin: "nav2_costmap_2d::RangeSensorLayer"
         enabled: true
-        topics: ["/ultrasound/front", "/ultrasound/rear", "/ultrasound/left", "/ultrasound/right","/ultrasound/fe", "/ultrasound/fd", "/ultrasound/te", "/ultrasound/td"]
+        topics: ["/ultrasound/front", "/ultrasound/rear", "/ultrasound/left", "/ultrasound/right","/ultrasound/fe", "/ultrasound/fd"]
         inflate_cone: 1.0
         no_readings_timeout: 1.0
         clear_threshold: 0.2
@@ -156,8 +156,8 @@ local_costmap:
           
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 1.0
+        cost_scaling_factor: 5.0
+        inflation_radius: 0.3
 
   local_costmap_client:
     ros__parameters:
@@ -173,12 +173,12 @@ global_costmap:
       update_frequency: 2.0
       publish_frequency: 2.0
       unknown_cost_value: -1
-      lethal_cost_threshold: 253
+      lethal_cost_threshold: 100
       global_frame: map
       robot_base_frame: base_link
       use_sim_time: True
       transform_tolerance: 0.5
-      footprint: "[[-0.25, -0.235], [0.35, -0.235], [0.35, 0.235], [-0.25, 0.235]]"   # CONFIRM matches real footprint
+      footprint: "[[-0.25, -0.235], [0.35, -0.235], [0.35, 0.235], [-0.25, 0.235]]"
       footprint_padding: 0.1
       resolution: 0.1
       track_unknown_space: true
@@ -212,15 +212,15 @@ global_costmap:
           clearing: true
           marking: true
           obstacle_max_range: 4.0
-          obstacle_min_range: 0.0
+          obstacle_min_range: 0.05
           raytrace_max_range: 4.5
           raytrace_min_range: 0.0
           expected_update_rate: 0.0
       
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 2.0
-        inflation_radius: 1.0 
+        cost_scaling_factor: 5.0
+        inflation_radius: 0.3
 
   global_costmap_client:
     ros__parameters:
@@ -262,11 +262,11 @@ recoveries_server:
     robot_base_frame: base_link
     transform_timeout: 0.1
     use_sim_time: true
-    simulate_ahead_time: 0.5
+    simulate_ahead_time: 1.0
     max_rotational_vel: 0.8
     min_rotational_vel: 0.4
     rotational_acc_lim: 3.0
-    back_up.speed: -0.25
+    back_up.speed: 0.25
 
 robot_state_publisher:
   ros__parameters:

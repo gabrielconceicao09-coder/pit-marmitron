@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+<!-- Esse arquivo descreve como o IMU foi tratado na simulação -->
+
     <xacro:property name="imu_x" value="0.15"/>
     <xacro:property name="imu_y" value="0.0"/>
     <xacro:property name="imu_z" value="0.075"/>
@@ -11,7 +13,7 @@
     <xacro:property name="imu_topic" value="/demo/imu"/>
 
     <joint name="imu_joint" type="fixed">
-        <parent link="chassi"/>
+        <parent link="chassiB"/>
         <child link="imu_frame"/>
         <origin xyz="${imu_x} ${imu_y} ${imu_z}" rpy="0 0 0"/>
     </joint>

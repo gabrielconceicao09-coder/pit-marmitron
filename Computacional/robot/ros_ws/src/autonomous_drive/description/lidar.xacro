@@ -1,14 +1,15 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <!-- Embora seja dito como um lazer, esse seria a camera, que para a simulação é tratada como um lidar-->
+    <!-- Embora seja dito como um laser, esse seria a câmera, que para a simulação é tratada como um lidar -->
+    <!-- Ou seja, a simulação não está emulando a câmera em si em um LiDAR, mas sim, o seu comportamento, que publicaria em /map  -->
 
     <xacro:property name="lazer_x" value="0.125"/>
     <xacro:property name="lazer_y" value="0.0"/>
-    <xacro:property name="lazer_z" value="0.15"/>
+    <xacro:property name="lazer_z" value="0.1105"/>
 
     <joint name="lazer_joint" type="fixed">
-        <parent link="chassi"/>
+        <parent link="chassiA"/>
         <child link="lazer_frame"/>
         <origin xyz="${lazer_x} ${lazer_y} ${lazer_z}" rpy="0.0 0.0 0.0"/>
     </joint>

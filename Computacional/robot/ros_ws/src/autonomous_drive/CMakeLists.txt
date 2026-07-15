@@ -15,7 +15,6 @@ find_package(sensor_msgs REQUIRED)
 find_package(gazebo_msgs REQUIRED)
 
 add_executable(vel_rodas src/calculo_vel_rodas.cpp)
-add_executable(mux src/mux2.cpp)
 add_executable(pos_gps src/pos_to_lat_sim.cpp)
 add_executable(ground_truth_publisher src/gps.cpp)
 
@@ -32,11 +31,6 @@ ament_target_dependencies(vel_rodas
   std_msgs
 )
 
-ament_target_dependencies(mux
-  rclcpp
-  geometry_msgs
-  std_msgs
-)
 
 ament_target_dependencies(pos_gps
   rclcpp
@@ -46,7 +40,6 @@ ament_target_dependencies(pos_gps
 
 install(TARGETS 
   ground_truth_publisher
-  mux
   vel_rodas
   pos_gps
   DESTINATION lib/${PROJECT_NAME})

@@ -1,0 +1,9 @@
+# Request
+float64 linear_vel    
+float64 tempo      
+int32   n_repetir          
+---
+# Response
+bool      sucesso
+string    mensagem
+float64   escala

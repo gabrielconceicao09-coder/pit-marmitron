@@ -9,9 +9,9 @@ class Vel_Calc : public rclcpp::Node
 {
     public: Vel_Calc():Node("Calc_Vel_Rodas")
     {
-        //Seta a inscrição e publição do nó, lembrar de mudar quando necessário, ele deve conectar após o mux
+        //Seta a inscrição e publição do nó, lembrar de mudar quando necessário, ele deve conectar após o mux (esse publica no cmd_vel)
         subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
-            "/cmd_vel_end", 10,
+            "/cmd_vel", 10,
             [this](const geometry_msgs::msg::Twist::SharedPtr msg) {
                 this->calculo(msg);
             }

@@ -14,7 +14,7 @@ public:
         // Declare parameters
         this->declare_parameter("link_name", "base_link");
         this->declare_parameter("gaussian_noise", 0.01);
-        this->declare_parameter("update_rate", 20.0);  // GPS-like rate
+        this->declare_parameter("update_rate", 1.0);  // GPS-like rate
         
         link_name_ = this->get_parameter("link_name").as_string();
         noise_std_ = this->get_parameter("gaussian_noise").as_double();
@@ -71,7 +71,7 @@ private:
         pose_msg.header.frame_id = "world";
         pose_msg.pose = latest_pose_;
         
-        // Add noise if configured
+        // Add noise
         if (noise_std_ > 0.0) {
             pose_msg.pose.position.x += noise_distribution_(generator_);
             pose_msg.pose.position.y += noise_distribution_(generator_);
@@ -102,7 +102,7 @@ private:
     double noise_std_;
     double update_rate_;
     
-    // Random number generation
+    // Random number
     std::default_random_engine generator_;
     std::normal_distribution<double> noise_distribution_;
 };
