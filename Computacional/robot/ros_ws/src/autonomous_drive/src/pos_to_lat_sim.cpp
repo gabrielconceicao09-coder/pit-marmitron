@@ -9,7 +9,6 @@ class FakeGps : public rclcpp::Node
 public:
     FakeGps() : Node("gps_sim")
     {
-        // Declare parameters
         this->declare_parameter("datum_lat", -15.793889);
         this->declare_parameter("datum_lon", -47.882778);
         this->declare_parameter("update_rate", 1.0);
@@ -18,15 +17,15 @@ public:
         datum_lon_ = this->get_parameter("datum_lon").as_double();
         double rate = this->get_parameter("update_rate").as_double();
         
-        // Subscribe to ground truth pose
+        // Se increve no topico do gps que gera a pos
         sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
             "/ground_truth/pose", 10,
             std::bind(&FakeGps::callback, this, std::placeholders::_1));
 
-        // Publish GPS fix
+        // GPS fix
         pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/gps/fix", 10);
         
-        // Timer for GPS updates using the rate parameter
+        // Timer para publicação
         int period_ms = static_cast<int>(1000.0 / rate);
         timer_ = this->create_wall_timer(
             std::chrono::milliseconds(period_ms),
@@ -47,7 +46,6 @@ public:
 private:
     void callback(const geometry_msgs::msg::PoseStamped::SharedPtr msg)
     {
-        // Store the latest pose for timer-based publishing
         latest_pose_ = *msg;
         has_pose_ = true;
     }
@@ -65,12 +63,12 @@ private:
         double y = latest_pose_.pose.position.y + noise_y_(gen_);
         double z = latest_pose_.pose.position.z + noise_z_(gen_);
 
-        // Convert meters to lat/lon using flat earth approximation
-        const double EARTH_RADIUS = 6378137.0; //approximation (veio da wiky)
+        // Converte metros para coordenadas, a formula adotada veio da wiki também
+        const double EARTH_RADIUS = 6378137.0; //aproximação (veio da wiky)
         double dlat = (y / EARTH_RADIUS) * (180.0 / M_PI);
         double dlon = (x / (EARTH_RADIUS * std::cos(M_PI * datum_lat_ / 180.0))) * (180.0 / M_PI);
 
-        // Create NavSatFix message
+        // Criando NavSatFix message
         sensor_msgs::msg::NavSatFix fix;
         fix.header.stamp = this->now();
         fix.header.frame_id = "gps_link";
@@ -78,11 +76,11 @@ private:
         fix.longitude = datum_lon_ + dlon;
         fix.altitude = z;
         
-        // GPS status
+        // GPS status, mais um atributo da mensagem
         fix.status.status = sensor_msgs::msg::NavSatStatus::STATUS_FIX;
         fix.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS;
 
-        // Realistic GPS covariance (Sinceramente não sei exatamente como essa parte funciona, mas é necessário para a mensagem)
+        // Covariancia (Sinceramente não sei exatamente como essa parte funciona, mas é necessário para a mensagem, retirado de forums)
         fix.position_covariance = {
             2.25, 0.0,  0.0,   
             0.0,  2.25, 0.0,    

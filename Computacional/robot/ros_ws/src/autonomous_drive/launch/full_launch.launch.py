@@ -12,7 +12,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from custom_msgs.srv import MsgMapScale
 
-# Esse launch inicia o gazebo junto da bridge, para assim se visualizar a simulação
+# Esse launch é o responsável pelo stack de navegação do robo fisico, não utiliza o esqueleto com sensores ou o gazebo
 
 
 def _call_calib():
@@ -45,12 +45,8 @@ def _call_calib():
 def _launch_setup(context, *args, **kwargs):
     package_share = get_package_share_directory('autonomous_drive')
 
-    try:
-        _call_calib()
+    _call_calib()
 
-    except Exception as e:
-        while True:
-            print("shit", e)
 
     setup = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(package_share, 'launch', 'setup.launch.py')),

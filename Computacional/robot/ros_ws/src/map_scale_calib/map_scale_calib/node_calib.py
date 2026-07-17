@@ -174,7 +174,7 @@ class Calib_map(Node):
             self._cmd_vel_pub.publish(stop)
             time.sleep(0.05)
 
-    # função que só faz a distancia entre pontos
+    # função para a distancia entre pontos
     @staticmethod
     def _dist(a, b):
         return math.hypot(b[0] - a[0], b[1] - a[1])

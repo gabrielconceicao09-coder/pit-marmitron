@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<!-- URDF - Descrição do Robô em software para simulações (ou uso real), com uso da câmera como fonte de mapeamento -->
+
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="Marmitron">
+    <xacro:include filename="robot_design.xacro"/>
+    <!-- <xacro:include filename="lidar.xacro"/> -->
+    <xacro:include filename="camera.xacro"/>
+    <xacro:include filename="imu.xacro"/>
+    <xacro:include filename="gps.xacro"/>
+    <xacro:include filename="robot_controller.xacro"/> <!-- O local com as configurações para simulação -->
+    <xacro:include filename="ultrasound.xacro"/>
+
+    <xacro:ultrasound_sensor name="ultrasound_frente"   parent="chassiA" xyz="0.2578 0.0 0.0865"    rpy="0 0 0"          topic="ultrasound/front"/>
+    <xacro:ultrasound_sensor name="ultrasound_tras"     parent="chassiA" xyz="-0.2578 0.0 0.0865"   rpy="0 0 ${pi}"      topic="ultrasound/rear"/>
+    <xacro:ultrasound_sensor name="ultrasound_esquerda" parent="chassiA" xyz="0.0 0.175 0.0865"  rpy="0 0 ${pi/2}"    topic="ultrasound/left"/>
+    <xacro:ultrasound_sensor name="ultrasound_direita"  parent="chassiA" xyz="0.0 -0.175 0.0865" rpy="0 0 ${-pi/2}"   topic="ultrasound/right"/>
+    <xacro:ultrasound_sensor name="ultrasound_fe"       parent="chassiA" xyz="0.2578 0.175 0.0865"  rpy="0 0 ${pi/4}"    topic="ultrasound/fe"/>
+    <xacro:ultrasound_sensor name="ultrasound_fd"       parent="chassiA" xyz="0.2578 -0.175 0.0865" rpy="0 0 ${-pi/4}"   topic="ultrasound/fd"/>
+    <!-- <xacro:ultrasound_sensor name="ultrasound_te"       parent="chassiB" xyz="-0.15 0.175 0.075" rpy="0 0 ${3*pi/4}"  topic="ultrasound/te"/>
+    <xacro:ultrasound_sensor name="ultrasound_td"       parent="chassiB" xyz="-0.15 -0.175 0.075" rpy="0 0 ${-3*pi/4}" topic="ultrasound/td"/> -->
+
+
+</robot>

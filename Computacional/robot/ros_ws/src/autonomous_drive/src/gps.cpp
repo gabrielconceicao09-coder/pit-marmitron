@@ -11,7 +11,6 @@ public:
     GroundTruthPublisher()
     : Node("ground_truth_publisher")
     {
-        // Declare parameters
         this->declare_parameter("link_name", "base_link");
         this->declare_parameter("gaussian_noise", 0.01);
         this->declare_parameter("update_rate", 1.0);  // GPS-like rate
@@ -20,7 +19,7 @@ public:
         noise_std_ = this->get_parameter("gaussian_noise").as_double();
         update_rate_ = this->get_parameter("update_rate").as_double();
         
-        // Initialize random number generator
+        // Gerador de ruido, para tentar "simular" um gps reaa
         unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
         generator_ = std::default_random_engine(seed);
         noise_distribution_ = std::normal_distribution<double>(0.0, noise_std_);
@@ -31,12 +30,12 @@ public:
         pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseStamped>(
             "/ground_truth/pose", 10);
         
-        // Subscriber to Gazebo link states
+        // Subscriber to Gazebo, é o que recebe a coordenada em x,y do simulador
         link_states_sub_ = this->create_subscription<gazebo_msgs::msg::LinkStates>(
             "/link_states", 10,
             std::bind(&GroundTruthPublisher::linkStatesCallback, this, std::placeholders::_1));
         
-        // Timer to publish at specified rate
+        // Timer, para publicar
         auto period = std::chrono::duration<double>(1.0 / update_rate_);
         timer_ = this->create_wall_timer(
             period,
@@ -50,7 +49,6 @@ public:
 private:
     void linkStatesCallback(const gazebo_msgs::msg::LinkStates::SharedPtr msg)
     {
-        // Just store the latest pose
         for (size_t i = 0; i < msg->name.size(); ++i)
         {
             if (msg->name[i].find(link_name_) != std::string::npos)
@@ -71,7 +69,7 @@ private:
         pose_msg.header.frame_id = "world";
         pose_msg.pose = latest_pose_;
         
-        // Add noise
+        // ruido
         if (noise_std_ > 0.0) {
             pose_msg.pose.position.x += noise_distribution_(generator_);
             pose_msg.pose.position.y += noise_distribution_(generator_);
@@ -93,7 +91,6 @@ private:
     rclcpp::Subscription<gazebo_msgs::msg::LinkStates>::SharedPtr link_states_sub_;
     rclcpp::TimerBase::SharedPtr timer_;
     
-    // Latest pose storage
     geometry_msgs::msg::Pose latest_pose_;
     bool has_pose_ = false;
     
@@ -102,7 +99,7 @@ private:
     double noise_std_;
     double update_rate_;
     
-    // Random number
+    // Random (para o ruido)
     std::default_random_engine generator_;
     std::normal_distribution<double> noise_distribution_;
 };

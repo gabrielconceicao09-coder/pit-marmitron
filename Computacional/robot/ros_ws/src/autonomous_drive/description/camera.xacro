@@ -1,0 +1,87 @@
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+    <xacro:include filename="inertials.xacro"/>
+
+    <xacro:property name="mass" value="0.05"/>
+    <xacro:property name="x" value="0.072"/>
+    <xacro:property name="y" value="0.13"/>
+    <xacro:property name="z" value="0.063"/>
+
+    <xacro:property name="name" value="mono_camera"/>
+
+    <!-- base_link <- IMU ; IMU <- camera --> <!-- No robô em si, as transformadas devem ocorrer dessa forma, pois os eixos do IMU não coincidem com os eixos de referência que o ROS2 e o Nav2 usam -->
+
+    <!-- Descrição da câmera -->
+
+    <link name="${name}_link">
+
+        <visual>
+            <origin xyz="-0.036 0 -0.015" rpy="0 0 0"/>  <!-- "-0.036 0 0.033" -->
+            <geometry>
+                <box size="${x} ${y} ${z}"/>
+            </geometry>
+            <material name="purple">
+                <color rgba="0.16 0.22 1.0 1.0 "/>
+            </material>
+        </visual>
+
+        <collision>
+            <origin xyz="-0.036 0 -0.0015" rpy="0 0 0"/>
+            <geometry>
+                <box size="${x} ${y} ${z}"/>
+            </geometry>
+        </collision>
+
+        <xacro:inertial_box mass="${mass}" x="${x}" y="${y}" z="${z}">
+            <origin xyz="-0.036 0 -0.0015" rpy="0 0 0"/>
+        </xacro:inertial_box>
+    </link>
+
+    <joint name="${name}_joint" type="fixed">
+        <parent link="chassiA"/>
+        <child link="${name}_link"/>
+        <origin xyz="0.2577 0 0.1195" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Descrição do comportamento da câmera no Gazebo (somente para fins de simulação) -->
+    <!-- Comentar para um robô real -->
+
+    <gazebo reference="${name}_link">
+        <sensor name="${name}_sensor" type="camera">
+            <visualize>true</visualize>
+            <!-- <always_on>true</always_on> -->
+            <update_rate>30.0</update_rate>
+            <camera name="${name}">
+                <horizontal_fov>1.047</horizontal_fov>
+                <image>
+                    <width>1920</width>
+                    <height>1080</height>
+                    <format>R8G8B8</format>
+                </image>
+                <clip>
+                    <near>0.1</near> <!-- Ignora o que estiver a menos de 0,1 metros -->
+                    <far>4.0</far> <!-- Ignora o que estiver a mais de 4 metros -->
+                </clip>
+            </camera>
+            <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+                <alwaysOn>true</alwaysOn>
+                <updateRate>0.0</updateRate>
+                <frame_name>${name}_frame</frame_name>
+                <pointCloudCutoff>0.5</pointCloudCutoff>
+                <pointCloudCutoffMax>3.0</pointCloudCutoffMax>
+                <distortionK1>0</distortionK1>
+                <distortionK2>0</distortionK2>
+                <distortionK3>0</distortionK3>
+                <distortionT1>0</distortionT1>
+                <distortionT2>0</distortionT2>
+                <CxPrime>0</CxPrime>
+                <Cx>0</Cx>
+                <Cy>0</Cy>
+                <focalLength>0</focalLength>
+                <hackBaseline>0.05</hackBaseline> <!-- Essa baseline é a distância entre lente. Simula uma câmera monocular -->
+            </plugin>
+        </sensor>
+    </gazebo>
+
+    <!-- </xacro:macro> -->
+
+</robot>
