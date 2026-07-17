@@ -7,7 +7,7 @@ Motivo da existencia do pacote: o OrbSlam gera um mapa em uma escala que não co
 O seu funcionamento necessita de 2 pacotes:
 
 | Pacote | Função |
-|---|---|---|
+|---|---|
 | `map_scale_calib` | O próprio nó que executa a rotina de calibração |
 | `custom_msgs` | Define o tipo de mensagem `MsgMapScale.srv` usado pelo nó |
 
@@ -17,12 +17,19 @@ O seu funcionamento necessita de 2 pacotes:
 O nó (`node_calib`) executa as seguintes funções ao receber uma chamada no serviço `calibrate_map_scale`:
 
 1. Aguarda as leituras estabilizarem — as últimas posições vindas do EKF e do SLAM são acumuladas em dois buffers, e cada um é considerado estável quando o desvio padrão das últimas N medições fica abaixo de um limite configurável. Isso evita medir a posição enquanto o robô ainda está ruidoso.
+
 2. Registra a posição inicial e movimenta o robô para frente por um tempo escolhido (`Twist` publicado em `/calib_vel` que deve passar por um Twist_Mux antes de chegar aso motores).
+
 3. Aguarda estabilizar novamente e registra a posição final.
+
 4. Calcula a razão entre as medidas: `distância segundo o EKF / distância segundo o SLAM`.
+
 5. Repete o mesmo processo indo para trás, obtendo mais uma amostra.
+
 6. Se solicitado, repete o ciclo completo (frente + trás) `n_repetir` vezes, retornando ao final a média das escalas válidas. (`n_repetir` é o nome do parametro que define quantas vezes esse comportamente aconetce)
+
 7. Responde o serviço com sucesso/falha, uma mensagem e o valor calculado. (a mensagem serve para o cliente que pedir o serviço tenha um feedback melhor)
+
 8. Ao concluir uma calibração com sucesso, o nó se desliga automaticamente (em uma thread separada), devido a isso, foi decidido utilziar python, pois após terminar a tarefa, ele não consumiria memória ou processamento.
 
 Caso a distância medida pelo SLAM fique abaixo de `dist_min`, a medição é descartada, evitando divisão por valores muito pequenos ou ruidosos (devido a baixa resolução dos encoders).
