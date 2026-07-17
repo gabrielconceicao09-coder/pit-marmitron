@@ -87,6 +87,8 @@ class _CodeScreenState extends State<CodeScreen>
       if (!mounted) return;
 
       if (result is UnlockSuccess) {
+        await _markDelivered();
+        if (!mounted) return;
         removeOrder(widget.orderId);
         setState(() => _codeUsed = true);
       } else {
@@ -229,6 +231,8 @@ class _CodeScreenState extends State<CodeScreen>
         if (!mounted) return;
 
         if (result is UnlockSuccess) {
+          await _markDelivered();
+          if (!mounted) return;
           removeOrder(widget.orderId);
           setState(() => _codeUsed = true);
         } else {
