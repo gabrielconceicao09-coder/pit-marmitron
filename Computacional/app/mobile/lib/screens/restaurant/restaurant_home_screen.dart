@@ -77,9 +77,31 @@ class _PanelTab extends StatelessWidget {
         kMockRestaurantProfile.restaurantId;
 
     return FutureBuilder<OrderListResponse>(
-      future: const OrderService().listOrdersByRestaurant(restaurantId, limit: 10),
+      future: const OrderService()
+          .listOrdersByRestaurant(restaurantId, limit: 100),
       builder: (context, snapshot) {
-        final orders = snapshot.data?.orders ?? const <OrderWithItems>[];
+        final orders = [...(snapshot.data?.orders ?? const <OrderWithItems>[])]
+          ..sort((a, b) => b.order.placedAt.compareTo(a.order.placedAt));
+
+        final now = DateTime.now();
+        bool isToday(DateTime d) {
+          final local = d.toLocal();
+          return local.year == now.year &&
+              local.month == now.month &&
+              local.day == now.day;
+        }
+
+        final ordersToday =
+            orders.where((o) => isToday(o.order.placedAt)).toList();
+        final pendingCount = orders
+            .where((o) => o.order.orderStatus == OrderStatus.pending)
+            .length;
+        final revenueToday =
+            ordersToday.fold<double>(0, (sum, o) => sum + o.order.total);
+        final revenueLabel =
+            'R\$${revenueToday.toStringAsFixed(2).replaceAll('.', ',')}';
+
+        final recentOrders = orders.take(10).toList();
 
         return CustomScrollView(
           slivers: [
@@ -146,17 +168,17 @@ class _PanelTab extends StatelessWidget {
                 // Stats
                 Row(children: [
                   _StatCard(
-                      value: '12',
+                      value: '${ordersToday.length}',
                       label: 'Pedidos\nhoje',
                       color: AppColors.accent),
                   const SizedBox(width: 10),
                   _StatCard(
-                      value: '3',
+                      value: '$pendingCount',
                       label: 'Em\nandamento',
                       color: AppColors.teal),
                   const SizedBox(width: 10),
                   _StatCard(
-                      value: 'R\$216',
+                      value: revenueLabel,
                       label: 'Faturamento\nhoje',
                       color: AppColors.purple),
                 ]),
@@ -233,9 +255,9 @@ class _PanelTab extends StatelessWidget {
               delegate: SliverChildBuilderDelegate(
                 (ctx, i) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: _OrderCard(orderWithItems: orders[i]),
+                  child: _OrderCard(orderWithItems: recentOrders[i]),
                 ),
-                childCount: orders.length,
+                childCount: recentOrders.length,
               ),
             ),
           ),

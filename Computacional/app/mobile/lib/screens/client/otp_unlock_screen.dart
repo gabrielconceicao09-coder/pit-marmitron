@@ -7,6 +7,7 @@
 // by state.isRunning so they are never called before the session is live.
 // ignore_for_file: prefer_const_constructors
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -15,7 +16,13 @@ import '../../theme/app_theme.dart';
 class QrScannerScreen extends StatefulWidget {
   final String expectedCode;
 
-  const QrScannerScreen({super.key, required this.expectedCode});
+  final bool autoConfirm;
+
+  const QrScannerScreen({
+    super.key,
+    required this.expectedCode,
+    this.autoConfirm = false,
+  });
 
   @override
   State<QrScannerScreen> createState() => _QrScannerScreenState();
@@ -23,6 +30,7 @@ class QrScannerScreen extends StatefulWidget {
 
 class _QrScannerScreenState extends State<QrScannerScreen> {
   late final MobileScannerController _scannerCtrl;
+  Timer? _autoConfirmTimer;
 
   // Double-pop guard: MLKit on Android fires onDetect multiple times per
   // burst. Once we have a valid code and have called Navigator.pop(), we
@@ -36,10 +44,18 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       formats: [BarcodeFormat.qrCode],
       facing: CameraFacing.back,
     );
+    if (widget.autoConfirm) {
+      _autoConfirmTimer = Timer(const Duration(seconds: 2), () {
+        if (!mounted || _scanned) return;
+        _scanned = true;
+        Navigator.pop(context, widget.expectedCode);
+      });
+    }
   }
 
   @override
   void dispose() {
+    _autoConfirmTimer?.cancel();
     // stop() then dispose(): stop() releases the hardware camera lock, then
     // dispose() frees the Dart-side controller. dispose() without stop() can
     // leave the camera acquired on some Android devices.

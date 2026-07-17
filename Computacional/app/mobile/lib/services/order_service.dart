@@ -77,6 +77,30 @@ class OrderService {
     return _orderListResponseFromJson(data);
   }
 
+  /// List orders for a client (customer order history)
+  Future<OrderListResponse> listOrdersByClient(
+    String clientId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final uri =
+        Uri.parse('${ApiService.baseUrl}/api/clients/$clientId/orders')
+            .replace(queryParameters: {
+      'limit': limit.toString(),
+      'offset': offset.toString(),
+    });
+
+    final response = await http.get(uri).timeout(ApiService.apiTimeout);
+
+    if (response.statusCode != 200) {
+      final error = _extractError(response.body);
+      throw Exception('Failed to list client orders: $error');
+    }
+
+    final data = jsonDecode(response.body) as Map<String, dynamic>;
+    return _orderListResponseFromJson(data);
+  }
+
   /// Update order status
   Future<void> updateOrderStatus(String orderId, String status) async {
     final uri = Uri.parse('${ApiService.baseUrl}/api/orders/$orderId/status');

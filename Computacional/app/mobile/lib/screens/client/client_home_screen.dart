@@ -25,6 +25,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../theme/app_theme.dart';
 import '../../models/models.dart';
 import '../../services/restaurant_service.dart';
+import '../../services/order_service.dart';
 import '../../widgets/widgets.dart';
 import '../../state/active_order_state.dart';
 import '../../state/user_state.dart';
@@ -657,13 +658,40 @@ class _ActiveOrderCard extends StatelessWidget {
 }
 
 // ─── ORDERS TAB ──────────────────────────────────────────────────────────────
-class _OrdersTab extends StatelessWidget {
+class _OrdersTab extends StatefulWidget {
   final List<ActiveOrder> orders;
 
   const _OrdersTab({required this.orders});
 
   @override
+  State<_OrdersTab> createState() => _OrdersTabState();
+}
+
+class _OrdersTabState extends State<_OrdersTab> {
+  late Future<OrderListResponse> _clientOrdersFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _clientOrdersFuture = _loadClientOrders();
+  }
+
+  Future<OrderListResponse> _loadClientOrders() {
+    final clientId = userStateNotifier.value.id;
+    return const OrderService().listOrdersByClient(clientId, limit: 100);
+  }
+
+  Future<void> _refresh() async {
+    final future = _loadClientOrders();
+    setState(() => _clientOrdersFuture = future);
+    await future;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final orders = widget.orders;
+    final activeIds = orders.map((o) => o.orderId).toSet();
+
     return Scaffold(
       backgroundColor: AC.surface(context),
       appBar: AppBar(
@@ -697,14 +725,188 @@ class _OrdersTab extends StatelessWidget {
             ),
         ],
       ),
-      body: orders.isEmpty
-          ? _OrdersEmptyState()
-          : ListView.separated(
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: FutureBuilder<OrderListResponse>(
+          future: _clientOrdersFuture,
+          builder: (context, snapshot) {
+            final past = [
+              ...?snapshot.data?.orders
+                  .where((o) => !activeIds.contains(o.order.id)),
+            ]..sort(
+                (a, b) => b.order.placedAt.compareTo(a.order.placedAt));
+
+            final loading =
+                snapshot.connectionState == ConnectionState.waiting;
+            final hasError = snapshot.hasError;
+
+            if (orders.isEmpty && past.isEmpty && !loading && !hasError) {
+              return _OrdersEmptyState();
+            }
+
+            return ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-              itemCount: orders.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (ctx, i) => _OrderListTile(order: orders[i]),
-            ),
+              children: [
+                if (orders.isNotEmpty) ...[
+                  _OrdersSectionHeader(label: 'Em andamento'),
+                  const SizedBox(height: 8),
+                  for (final o in orders) ...[
+                    _OrderListTile(order: o),
+                    const SizedBox(height: 12),
+                  ],
+                  const SizedBox(height: 8),
+                ],
+                _OrdersSectionHeader(label: 'Histórico'),
+                const SizedBox(height: 8),
+                if (loading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (hasError)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: AppStatePanel(
+                      icon: Icons.cloud_off_outlined,
+                      title: 'Pedidos indisponíveis',
+                      message:
+                          'Não foi possível carregar seus pedidos agora. Arraste para atualizar.',
+                    ),
+                  )
+                else if (past.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: AppStatePanel(
+                      icon: Icons.inbox_outlined,
+                      title: 'Nenhum pedido anterior',
+                      message: 'Seus pedidos concluídos aparecerão aqui.',
+                    ),
+                  )
+                else
+                  for (final p in past) ...[
+                    _ClientOrderTile(order: p),
+                    const SizedBox(height: 10),
+                  ],
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ─── CLIENT ORDER TILE ────────────────────────────────
+class _ClientOrderTile extends StatelessWidget {
+  final OrderWithItems order;
+
+  const _ClientOrderTile({required this.order});
+
+  StatusBadge get _badge {
+    switch (order.order.orderStatus) {
+      case OrderStatus.delivered:
+        return const StatusBadge(
+            label: 'Entregue',
+            bg: AppColors.statusDelivered,
+            textColor: AppColors.statusDeliveredText);
+      case OrderStatus.cancelled:
+        return const StatusBadge(
+            label: 'Cancelado',
+            bg: AppColors.statusPending,
+            textColor: AppColors.statusPendingText);
+      case OrderStatus.onTheWay:
+        return const StatusBadge(
+            label: 'A caminho',
+            bg: AppColors.statusDelivered,
+            textColor: AppColors.statusDeliveredText);
+      case OrderStatus.preparing:
+        return const StatusBadge(
+            label: 'Em preparo',
+            bg: AppColors.statusPreparing,
+            textColor: AppColors.statusPreparingText);
+      case OrderStatus.pending:
+        return const StatusBadge(
+            label: 'Pendente',
+            bg: AppColors.statusPending,
+            textColor: AppColors.statusPendingText);
+    }
+  }
+
+  String get _shortId {
+    final id = order.order.id;
+    return '#${id.length > 6 ? id.substring(id.length - 6) : id}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final itemsSummary = order.items
+        .map((i) => '${i.quantity}× ${i.productName}')
+        .join(' · ');
+    final total =
+        'R\$${order.order.total.toStringAsFixed(2).replaceAll('.', ',')}';
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AC.card(context),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AC.border(context)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  '$_shortId · ${order.order.restaurantName}',
+                  style: GoogleFonts.spaceGrotesk(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AC.primary(context)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              _badge,
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            itemsSummary,
+            style: GoogleFonts.dmSans(fontSize: 12, color: AC.muted(context)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.location_on_outlined,
+                  size: 12, color: AC.muted(context)),
+              const SizedBox(width: 3),
+              Expanded(
+                child: Text(
+                  order.order.deliveryAddress,
+                  style:
+                      GoogleFonts.dmSans(fontSize: 11, color: AC.muted(context)),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                total,
+                style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AC.primary(context)),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -819,6 +1021,26 @@ class _OrderListTile extends StatelessWidget {
           const SizedBox(width: 6),
           Icon(Icons.chevron_right_rounded, color: AC.muted(context), size: 20),
         ],
+      ),
+    );
+  }
+}
+
+// ─── SECTION HEADER ──────────────────────────────────────────────────────────
+class _OrdersSectionHeader extends StatelessWidget {
+  final String label;
+
+  const _OrdersSectionHeader({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: GoogleFonts.spaceGrotesk(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        color: AC.muted(context),
+        letterSpacing: 0.5,
       ),
     );
   }

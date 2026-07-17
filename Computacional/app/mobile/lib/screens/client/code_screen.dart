@@ -8,9 +8,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'otp_unlock_screen.dart';
+import 'client_home_screen.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/widgets.dart';
 import '../../services/api_service.dart';
+import '../../services/order_service.dart';
 import '../../state/active_order_state.dart';
 
 class CodeScreen extends StatefulWidget {
@@ -97,6 +99,48 @@ class _CodeScreenState extends State<CodeScreen>
       }
     } finally {
       if (mounted) setState(() => _isValidating = false);
+    }
+  }
+
+  // ─── Fluxo completo simulado (sem robô/gateway) ──────────────────────────
+  Future<void> _handleSimularFluxoCompleto() async {
+    if (_isValidating || _codeUsed) return;
+    setState(() => _isValidating = true);
+
+    try {
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (!mounted) return;
+
+      final scannedCode = await Navigator.push<String>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => QrScannerScreen(
+            expectedCode: _codeForValidation,
+            autoConfirm: true,
+          ),
+        ),
+      );
+      if (!mounted) return;
+
+      if (scannedCode != null) {
+        await _markDelivered();
+        if (!mounted) return;
+        removeOrder(widget.orderId);
+        setState(() => _codeUsed = true);
+      }
+    } finally {
+      if (mounted) setState(() => _isValidating = false);
+    }
+  }
+
+  Future<void> _markDelivered() async {
+    const svc = OrderService();
+    for (final status in const ['preparing', 'on_the_way', 'delivered']) {
+      try {
+        await svc.updateOrderStatus(widget.orderId, status);
+      } catch (e) {
+        debugPrint('updateOrderStatus($status) ignorado: $e');
+      }
     }
   }
 
@@ -205,6 +249,13 @@ class _CodeScreenState extends State<CodeScreen>
   }
 
   // ─── Helpers ─────────────────────────────────────────────────────────────
+  void _goHome() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const ClientHomeScreen()),
+      (route) => false,
+    );
+  }
 
   void _showSnackbar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -308,6 +359,7 @@ class _CodeScreenState extends State<CodeScreen>
       backgroundColor: AC.surface(context),
       appBar: AppBar(
         title: const Text('Código de retirada'),
+        automaticallyImplyLeading: false,
         backgroundColor: AC.surface(context),
         foregroundColor: AC.primary(context),
         elevation: 0,
@@ -488,14 +540,37 @@ class _CodeScreenState extends State<CodeScreen>
                     style:
                         TextButton.styleFrom(foregroundColor: AppColors.accent),
                   ),
+                  const SizedBox(height: 4),
+                  TextButton.icon(
+                    onPressed:
+                        _isValidating ? null : _handleSimularFluxoCompleto,
+                    icon: const Icon(Icons.route_rounded, size: 18),
+                    label: Text(
+                      'Simular fluxo completo',
+                      style: GoogleFonts.dmSans(
+                          fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    style:
+                        TextButton.styleFrom(foregroundColor: AppColors.accent),
+                  ),
                 ],
               )
             else
-              AppButton(
-                label: 'Avaliar entrega',
-                onTap: _showRatingSheet,
-                icon: Icons.star_outline_rounded,
-                color: AppColors.teal,
+              Column(
+                children: [
+                  AppButton(
+                    label: 'Avaliar entrega',
+                    onTap: _showRatingSheet,
+                    icon: Icons.star_outline_rounded,
+                    color: AppColors.teal,
+                  ),
+                  const SizedBox(height: 12),
+                  AppButton(
+                    label: 'OK',
+                    onTap: _goHome,
+                    icon: Icons.check_rounded,
+                  ),
+                ],
               ),
           ],
         ),
