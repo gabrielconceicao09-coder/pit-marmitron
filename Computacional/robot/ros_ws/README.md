@@ -18,7 +18,6 @@ Pacotes necessários para pleno funcionamento:
 - `gazebo_ros`
 - `slam_toolbox`
 - `robot_localization`
-- ``
 - `Nav2`
 - `twist_mux`
 
